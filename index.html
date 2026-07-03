@@ -83,8 +83,9 @@
     <div class="qa-amount-block">
       <div class="qa-amount-label">금액</div>
       <div class="qa-amount">
-        <span class="cur" id="qa-currency-symbol">₩</span><span id="qa-amount-display">0</span><span class="caret"></span>
+        <span class="cur" id="qa-currency-symbol">₩</span><input id="qa-amount-display" class="qa-amount-input" inputmode="numeric" autocomplete="off" value="0" readonly><span class="caret"></span>
       </div>
+      <button type="button" id="qa-input-mode-toggle" class="qa-mode-toggle">⌨ 키보드로 입력</button>
     </div>
 
     <div class="keypad" id="qa-keypad">
@@ -105,9 +106,17 @@
       <input class="qa-memo" id="qa-memo" placeholder="예: 회사 앞 카페">
     </div>
 
+    <div id="qa-queue-section" class="qa-queue-section" hidden>
+      <div class="qa-field-label" id="qa-queue-label">담아둔 항목</div>
+      <div id="qa-queue-list" class="qa-queue-list"></div>
+    </div>
+
     <div class="qa-footer">
+      <div class="qa-footer-buttons">
+        <button id="qa-queue-add" class="btn-outline qa-queue-add-btn" type="button">+ 담기</button>
+        <button id="qa-submit" class="stamp-btn" type="button">등록</button>
+      </div>
       <div class="qa-footer-info" id="qa-footer-info">도장을 찍으면 시트에 바로 추가돼요</div>
-      <button id="qa-submit" class="stamp-btn" type="button">등록</button>
     </div>
   </section>
 

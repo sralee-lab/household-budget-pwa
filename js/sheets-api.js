@@ -111,3 +111,32 @@ export async function appendTransaction(accessToken, spreadsheetId, { dateStr, c
   if (!res.ok) throw new Error(`거래 등록 실패: ${res.status}`);
   return res.json();
 }
+
+// 여러 건을 한 번에 등록한다 — 날짜가 다른 달에 걸쳐 있으면 월 탭별로
+// 묶어서 탭당 한 번씩 append 호출한다(같은 탭이면 한 번의 호출로 끝난다).
+export async function appendTransactions(accessToken, spreadsheetId, transactions) {
+  const byTab = new Map();
+  for (const t of transactions) {
+    const tab = monthTabFor(t.dateStr);
+    if (!byTab.has(tab)) byTab.set(tab, []);
+    byTab.get(tab).push([t.dateStr, t.category, t.payMethod, t.amount, t.memo, t.currency]);
+  }
+
+  const range = (tab) => encodeURIComponent(`'${tab}'!${SPENDING_RANGE_START}:${SPENDING_RANGE_END}`);
+  const params = new URLSearchParams({
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'OVERWRITE',
+  });
+
+  for (const [tab, rows] of byTab) {
+    const res = await fetch(
+      `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/${range(tab)}:append?${params.toString()}`,
+      {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ values: rows }),
+      }
+    );
+    if (!res.ok) throw new Error(`거래 등록 실패: ${res.status}`);
+  }
+}
