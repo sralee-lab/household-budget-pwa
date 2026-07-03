@@ -28,7 +28,7 @@ export async function copyTemplateForUser(accessToken, displayName) {
     headers: authHeaders(accessToken),
     body: JSON.stringify({
       name: `우리 집 가계부 - ${displayName}`,
-      properties: { [APP_PROPERTY_KEY]: APP_PROPERTY_VALUE },
+      appProperties: { [APP_PROPERTY_KEY]: APP_PROPERTY_VALUE },
     }),
   });
   if (!res.ok) throw new Error(`템플릿 복사 실패: ${res.status}`);
