@@ -95,7 +95,10 @@ function renderRecentList() {
   const el = document.getElementById('db-recent-list');
   el.innerHTML = '';
   const currency = state.settings.defaultCurrency;
-  const sorted = [...state.transactions].sort((a, b) => b.dateStr.localeCompare(a.dateStr)).slice(0, 15);
+  // 예전엔 15건까지만 보여줬는데, 카드 한 장만 써도 한 달에 60건이 훌쩍
+  // 넘어가는 경우가 흔해 그 뒤 거래는 아예 수정/삭제할 방법이 없었다.
+  // 이제 이번 달 전체 거래를 다 보여준다.
+  const sorted = [...state.transactions].sort((a, b) => b.dateStr.localeCompare(a.dateStr));
 
   if (sorted.length === 0) {
     renderEmptyRow(el, '이 달엔 등록된 거래가 없어요.');
