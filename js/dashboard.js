@@ -119,13 +119,22 @@ function renderRecentList() {
 
     const amountSpan = document.createElement('span');
     amountSpan.className = 'ledger-amount figure ' + (t.isIncome ? 'income' : 'expense');
-    amountSpan.textContent = formatMoney(t.convertedAmount, currency);
 
-    if (t.currency !== currency) {
-      const orig = document.createElement('span');
-      orig.className = 'fx-original';
-      orig.textContent = `${formatMoney(t.amount, t.currency)} · ${md} 환율`;
-      amountSpan.appendChild(orig);
+    if (t.fxFailed) {
+      // 환율 조회 실패 - 환산된 척 보여주면 안 되니 원래 통화 그대로 표시.
+      amountSpan.textContent = formatMoney(t.amount, t.currency);
+      const warn = document.createElement('span');
+      warn.className = 'fx-original fx-warning';
+      warn.textContent = '환율 조회 실패 - 합계 미반영';
+      amountSpan.appendChild(warn);
+    } else {
+      amountSpan.textContent = formatMoney(t.convertedAmount, currency);
+      if (t.currency !== currency) {
+        const orig = document.createElement('span');
+        orig.className = 'fx-original';
+        orig.textContent = `${formatMoney(t.amount, t.currency)} · ${md} 환율`;
+        amountSpan.appendChild(orig);
+      }
     }
 
     row.appendChild(catSpan);
@@ -170,13 +179,20 @@ async function loadAndRender() {
   const categoryTotals = new Map();
   const paymentTotals = new Map();
   const transactions = [];
+  let fxErrorCount = 0;
 
   for (const row of rows) {
     let convertedAmount;
+    let fxFailed = false;
     try {
       convertedAmount = await convertAmount(row.amount, row.currency, target, row.dateStr);
     } catch (err) {
-      convertedAmount = row.amount; // 환율 조회 실패 시 액면가로 대체(가장 안전한 폴백)
+      // 환율 조회 실패 시 액면가로 대체하되, 조용히 넘어가지 않고 아래에서
+      // 사용자에게 알린다 — 다른 통화 거래가 환산 없이 섞여 합계가 틀려
+      // 보일 수 있기 때문(frankfurter.app -> .dev 도메인 이전 때 실제로 겪은 문제).
+      convertedAmount = row.amount;
+      fxFailed = row.currency !== target;
+      if (fxFailed) fxErrorCount++;
     }
     const isIncome = incomeCategories.includes(row.category);
 
@@ -187,7 +203,7 @@ async function loadAndRender() {
       categoryTotals.set(row.category, (categoryTotals.get(row.category) || 0) + convertedAmount);
       paymentTotals.set(row.payMethod, (paymentTotals.get(row.payMethod) || 0) + convertedAmount);
     }
-    transactions.push({ ...row, convertedAmount, isIncome });
+    transactions.push({ ...row, convertedAmount, isIncome, fxFailed });
   }
 
   state.totalIncome = totalIncome;
@@ -195,6 +211,13 @@ async function loadAndRender() {
   state.categoryTotals = categoryTotals;
   state.paymentTotals = paymentTotals;
   state.transactions = transactions;
+
+  if (fxErrorCount > 0) {
+    showDbStatus(
+      `환율 조회에 실패해 ${fxErrorCount}건은 환산 없이 원래 금액으로 합산했어요. 합계가 부정확할 수 있어요.`,
+      true
+    );
+  }
 
   renderSummary();
   renderActiveBreakdown();

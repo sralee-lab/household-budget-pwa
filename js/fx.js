@@ -10,7 +10,11 @@ export async function getHistoricalRate(dateStr, from, to) {
   const cached = localStorage.getItem(cacheKey);
   if (cached !== null) return Number(cached);
 
-  const res = await fetch(`https://api.frankfurter.app/${dateStr}?from=${from}&to=${to}`);
+  // 2026년 중 frankfurter.app -> frankfurter.dev(v1 경로)로 도메인이 바뀌었다.
+  // 예전 도메인은 301로 새 도메인에 리다이렉트하는데, 브라우저 fetch에서 이
+  // 리다이렉트를 넘어가며 CORS 처리가 달라져 조용히 실패했다(폴백으로
+  // 환산 없이 액면가를 그대로 쓰는 버그로 이어짐) — 새 도메인을 직접 쓴다.
+  const res = await fetch(`https://api.frankfurter.dev/v1/${dateStr}?from=${from}&to=${to}`);
   if (!res.ok) throw new Error(`환율 조회 실패: ${res.status}`);
   const data = await res.json();
   const rate = data.rates[to];

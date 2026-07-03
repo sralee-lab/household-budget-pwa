@@ -629,6 +629,7 @@ html, body {
 .ledger-dots { flex: 1; border-bottom: 1px dotted #b3a888; transform: translateY(-4px); }
 .ledger-amount { white-space: nowrap; text-align: right; }
 .ledger-amount .fx-original { display: block; font-size: 10.5px; color: var(--ink-soft); font-weight: 400; margin-top: 1px; }
+.ledger-amount .fx-warning { color: var(--seal); font-weight: 700; }
 .ledger-empty { padding: 20px 22px; text-align: center; color: var(--ink-soft); font-size: 13px; }
 .ledger-row.is-clickable { cursor: pointer; }
 .ledger-row.is-clickable:active { background: var(--paper-deep); }

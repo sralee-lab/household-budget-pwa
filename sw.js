@@ -1,4 +1,4 @@
-const CACHE_NAME = 'household-budget-shell-v10';
+const CACHE_NAME = 'household-budget-shell-v11';
 const SHELL_FILES = [
   './',
   './index.html',
