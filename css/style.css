@@ -205,13 +205,31 @@ section[hidden] { display: none !important; }
 }
 .qa-status.is-error { border-color: var(--seal); color: var(--seal); }
 
+.qa-date-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 22px 0;
+  font-size: 13px;
+}
+.qa-date-label { color: var(--ink-soft); font-weight: 700; }
+.qa-date-input {
+  border: none;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  padding: 4px 2px;
+}
+
 .segmented {
   display: flex;
   border-radius: 14px;
   background: var(--paper-deep);
   padding: 4px;
   gap: 4px;
-  margin: 14px 22px 0;
+  margin: 10px 22px 0;
 }
 .segmented button {
   flex: 1;

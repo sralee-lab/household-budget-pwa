@@ -66,6 +66,14 @@ function renderPaymentChips() {
   }
 }
 
+function todayLocalDateStr() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function renderAmount() {
   const display = state.amountDigits === '' ? '0' : Number(state.amountDigits).toLocaleString('en-US');
   document.getElementById('qa-amount-display').textContent = display;
@@ -102,6 +110,7 @@ function resetForm() {
   state.amountDigits = '';
   document.getElementById('qa-memo').value = '';
   renderAmount();
+  // 날짜는 초기화하지 않는다 — 같은 날짜로 여러 건 연달아 등록하는 경우가 흔함.
 }
 
 async function handleSubmit() {
@@ -110,12 +119,17 @@ async function handleSubmit() {
     showQaMessage('금액을 입력해주세요.', true);
     return;
   }
+  const dateStr = document.getElementById('qa-date').value;
+  if (!dateStr) {
+    showQaMessage('날짜를 선택해주세요.', true);
+    return;
+  }
 
   const submitBtn = document.getElementById('qa-submit');
   submitBtn.disabled = true;
   try {
     await appendTransaction(state.accessToken, state.spreadsheetId, {
-      date: new Date(),
+      dateStr,
       category: state.category,
       payMethod: state.payMethod,
       amount,
@@ -144,6 +158,7 @@ export function initQuickAdd(accessToken, spreadsheetId, email) {
 
   document.getElementById('qa-email').textContent = email;
   document.getElementById('qa-currency-symbol').textContent = CURRENCY_SYMBOLS[state.currency];
+  document.getElementById('qa-date').value = todayLocalDateStr();
 
   renderCurrencyChips();
   renderCategoryChips();
