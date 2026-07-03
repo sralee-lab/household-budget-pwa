@@ -1,11 +1,14 @@
 import { redirectToLogin, consumeTokenFromRedirect, getStoredToken, clearToken, fetchUserInfo } from './auth.js';
-import { findMySpreadsheet, copyTemplateForUser, spreadsheetEditUrl } from './drive-api.js';
-import { createSettingsSheet } from './sheets-api.js';
+import { findMySpreadsheet, findMostRecentSpreadsheet, copyTemplateForUser, spreadsheetEditUrl } from './drive-api.js';
+import { createSettingsSheet, readSettingsValues } from './sheets-api.js';
 import { initQuickAdd, showOnboardingMessage } from './quick-add.js';
+import { showOnboardingChoice } from './onboarding.js';
+import { getLinkedSheetId } from './local-store.js';
 
 const screens = {
   login: document.getElementById('screen-login'),
   loading: document.getElementById('screen-loading'),
+  onboarding: document.getElementById('screen-onboarding'),
   quickAdd: document.getElementById('screen-quick-add'),
 };
 
@@ -31,6 +34,58 @@ function showSheetLink(fileId) {
   link.hidden = false;
 }
 
+// 올해 사본을 찾고, 없으면 "예전 연도 사본이 있는 기존 사용자(자동 롤오버)"인지
+// "완전 신규 사용자(온보딩 선택 필요)"인지 구분해 스프레드시트를 확정한다.
+// 반환값에 onboardingMessage가 있으면 화면에 안내 메시지를 띄운다.
+async function resolveSpreadsheet(accessToken, email) {
+  const year = new Date().getFullYear();
+
+  const linkedId = getLinkedSheetId();
+  if (linkedId) {
+    return { file: { id: linkedId }, onboardingMessage: null };
+  }
+
+  setLoadingMessage('가계부 확인 중...');
+  const thisYearFile = await findMySpreadsheet(accessToken, year);
+  if (thisYearFile) {
+    return { file: thisYearFile, onboardingMessage: null };
+  }
+
+  setLoadingMessage('예전 기록 확인 중...');
+  const recentFile = await findMostRecentSpreadsheet(accessToken);
+  if (recentFile) {
+    setLoadingMessage(`${year}년 가계부를 새로 만드는 중이에요...`);
+    let seedValues = null;
+    try {
+      seedValues = await readSettingsValues(accessToken, recentFile.id);
+    } catch (err) {
+      seedValues = null;
+    }
+    const newFile = await copyTemplateForUser(accessToken, email, year);
+    await createSettingsSheet(accessToken, newFile.id, seedValues);
+    return {
+      file: newFile,
+      onboardingMessage: `${year}년 가계부를 새로 만들었어요! (작년 설정을 그대로 이어받았어요)`,
+    };
+  }
+
+  // 완전 신규 사용자 → 온보딩 선택 화면에서 사용자가 고를 때까지 대기.
+  showScreen('onboarding');
+  return new Promise((resolve) => {
+    showOnboardingChoice({
+      accessToken,
+      onCreateNew: async () => {
+        const file = await copyTemplateForUser(accessToken, email, year);
+        await createSettingsSheet(accessToken, file.id);
+        return file;
+      },
+      onResolved: (file) => {
+        resolve({ file, onboardingMessage: null });
+      },
+    });
+  });
+}
+
 async function boot() {
   const redirectedToken = consumeTokenFromRedirect();
   const token = redirectedToken || getStoredToken();
@@ -44,17 +99,7 @@ async function boot() {
   setLoadingMessage('확인 중...');
   try {
     const userInfo = await fetchUserInfo(token.accessToken);
-
-    setLoadingMessage('가계부 확인 중...');
-    let file = await findMySpreadsheet(token.accessToken);
-    let onboardingMessage = null;
-
-    if (!file) {
-      setLoadingMessage('가계부를 처음 만드는 중이에요...');
-      file = await copyTemplateForUser(token.accessToken, userInfo.email);
-      await createSettingsSheet(token.accessToken, file.id);
-      onboardingMessage = '가계부를 새로 만들었어요!';
-    }
+    const { file, onboardingMessage } = await resolveSpreadsheet(token.accessToken, userInfo.email);
 
     showSheetLink(file.id);
     showScreen('quickAdd');

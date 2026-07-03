@@ -40,6 +40,23 @@
     <p id="loading-message">확인 중...</p>
   </section>
 
+  <section id="screen-onboarding" hidden>
+    <div class="stamp">家計簿</div>
+    <p class="onboarding-title">처음 오셨네요!</p>
+    <p class="onboarding-sub">새 가계부를 만들까요, 이미 쓰던 시트를 연결할까요?</p>
+
+    <button id="onboarding-new-btn" class="btn-google" type="button">새로 만들기</button>
+    <button id="onboarding-link-btn" class="btn-outline" type="button">기존 시트 연결하기</button>
+    <p id="onboarding-error" class="login-error" hidden></p>
+
+    <div id="onboarding-link-panel" hidden>
+      <p class="onboarding-link-hint">쓰던 구글 시트의 URL이나 ID를 붙여넣어주세요. 연결하는 순간부터 앱이 이 시트에 직접 데이터를 써요 — 걱정되면 먼저 시트를 복사해두고 그 사본 주소를 넣어주세요.</p>
+      <input id="onboarding-link-input" type="text" class="onboarding-link-input" placeholder="https://docs.google.com/spreadsheets/d/...">
+      <button id="onboarding-link-confirm" class="btn-google" type="button">연결하기</button>
+      <p id="onboarding-link-error" class="login-error" hidden></p>
+    </div>
+  </section>
+
   <section id="screen-quick-add" hidden>
     <div class="qa-topbar">
       <span class="qa-topbar-email" id="qa-email"></span>

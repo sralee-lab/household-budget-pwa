@@ -34,7 +34,7 @@ html, body {
   flex-direction: column;
 }
 
-section[hidden] { display: none !important; }
+[hidden] { display: none !important; }
 
 /* ---------- 로그인 화면 ---------- */
 #screen-login {
@@ -131,6 +131,59 @@ section[hidden] { display: none !important; }
   font-size: 12.5px;
   margin-top: 14px;
   max-width: 360px;
+}
+
+/* ---------- 온보딩(새로 만들기/기존 시트 연결) 화면 ---------- */
+#screen-onboarding {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 28px;
+  gap: 10px;
+}
+.onboarding-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0;
+}
+.onboarding-sub {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  margin: 0 0 14px;
+}
+#onboarding-link-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+  margin-top: 16px;
+}
+.onboarding-link-hint {
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  text-align: left;
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--seal);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin: 0;
+}
+.onboarding-link-input {
+  width: 100%;
+  border: 1.5px solid var(--rule);
+  border-radius: 12px;
+  background: var(--cream);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink);
+  padding: 12px 14px;
 }
 
 /* ---------- 로딩 화면 ---------- */
