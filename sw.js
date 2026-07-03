@@ -1,4 +1,4 @@
-const CACHE_NAME = 'household-budget-shell-v7';
+const CACHE_NAME = 'household-budget-shell-v8';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -40,7 +40,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // 아이콘처럼 거의 안 바뀌는 파일만 cache-first로 빠르게 서빙한다.
+  if (url.pathname.includes('/icons/')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => cached || fetch(event.request))
+    );
+    return;
+  }
+
+  // 그 외(HTML/CSS/JS)는 항상 네트워크를 먼저 시도해 최신 코드를 받고,
+  // 응답을 캐시에 갱신해둔다 — 개발 중 코드를 고칠 때마다 오래된 캐시가
+  // 남아 새 수정 사항이 반영되지 않는 문제를 근본적으로 없애기 위함.
+  // 오프라인일 때만 마지막으로 받아둔 캐시로 대체한다.
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(event.request)
+      .then((response) => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
