@@ -133,6 +133,25 @@ html, body {
   max-width: 360px;
 }
 
+.install-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  max-width: 360px;
+  background: var(--paper-deep);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  text-align: left;
+}
+.install-hint-dismiss {
+  appearance: none; border: none; background: none; cursor: pointer;
+  flex: none; color: var(--ink-soft); font-size: 14px; padding: 0; line-height: 1;
+}
+
 /* ---------- 온보딩(새로 만들기/기존 시트 연결) 화면 ---------- */
 #screen-onboarding {
   flex: 1;

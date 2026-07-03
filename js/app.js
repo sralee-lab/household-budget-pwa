@@ -172,4 +172,28 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// 이미 홈 화면에 설치되어 standalone으로 실행 중이면 안 보여준다.
+function initInstallHint() {
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (isStandalone) return;
+  if (localStorage.getItem('hb_install_hint_dismissed')) return;
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const text = isIOS
+    ? 'Safari 하단 공유 버튼을 누르고 "홈 화면에 추가"를 선택하면 앱처럼 설치돼요.'
+    : '브라우저 메뉴에서 "홈 화면에 추가" 또는 "앱 설치"를 선택하면 앱처럼 설치돼요.';
+
+  document.getElementById('install-hint-text').textContent = text;
+  const hint = document.getElementById('install-hint');
+  hint.hidden = false;
+
+  document.getElementById('install-hint-dismiss').addEventListener('click', () => {
+    hint.hidden = true;
+    localStorage.setItem('hb_install_hint_dismissed', '1');
+  });
+}
+
+initInstallHint();
+
 boot();
