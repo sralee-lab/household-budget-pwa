@@ -19,3 +19,12 @@ export const APP_PROPERTY_VALUE = 'v1';
 export const DEFAULT_CURRENCIES = ['KRW', 'JPY', 'USD'];
 export const CURRENCY_SYMBOLS = { KRW: '₩', JPY: '¥', USD: '$' };
 export const CURRENCY_LABELS = { KRW: '원', JPY: '엔', USD: '달러' };
+export const DEFAULT_CURRENCY = 'KRW';
+
+// 5단계(설정 화면)에서 Settings 탭을 읽어오기 전까지 쓰는 하드코딩된 기본값.
+export const EXPENSE_CATEGORIES = ['식비', '카페·간식', '교통', '쇼핑', '의료'];
+export const INCOME_CATEGORIES = ['급여', '용돈', '부수입'];
+export const PAYMENT_METHODS = ['카드', '현금', '계좌이체'];
+
+// 월별 탭 이름 (템플릿 원본과 동일한 영문 약어).
+export const MONTH_TABS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

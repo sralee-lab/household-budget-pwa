@@ -1,11 +1,12 @@
 import { redirectToLogin, consumeTokenFromRedirect, getStoredToken, clearToken, fetchUserInfo } from './auth.js';
 import { findMySpreadsheet, copyTemplateForUser, spreadsheetEditUrl } from './drive-api.js';
 import { createSettingsSheet } from './sheets-api.js';
+import { initQuickAdd, showOnboardingMessage } from './quick-add.js';
 
 const screens = {
   login: document.getElementById('screen-login'),
   loading: document.getElementById('screen-loading'),
-  home: document.getElementById('screen-home'),
+  quickAdd: document.getElementById('screen-quick-add'),
 };
 
 function showScreen(name) {
@@ -43,22 +44,22 @@ async function boot() {
   setLoadingMessage('확인 중...');
   try {
     const userInfo = await fetchUserInfo(token.accessToken);
-    document.getElementById('home-email').textContent = userInfo.email;
 
     setLoadingMessage('가계부 확인 중...');
     let file = await findMySpreadsheet(token.accessToken);
+    let onboardingMessage = null;
 
-    if (file) {
-      document.getElementById('home-status').textContent = '가계부를 찾았어요';
-    } else {
+    if (!file) {
       setLoadingMessage('가계부를 처음 만드는 중이에요...');
       file = await copyTemplateForUser(token.accessToken, userInfo.email);
       await createSettingsSheet(token.accessToken, file.id);
-      document.getElementById('home-status').textContent = '가계부를 새로 만들었어요!';
+      onboardingMessage = '가계부를 새로 만들었어요!';
     }
 
     showSheetLink(file.id);
-    showScreen('home');
+    showScreen('quickAdd');
+    initQuickAdd(token.accessToken, file.id, userInfo.email);
+    if (onboardingMessage) showOnboardingMessage(onboardingMessage);
   } catch (err) {
     clearToken();
     showScreen('login');

@@ -40,12 +40,53 @@
     <p id="loading-message">확인 중...</p>
   </section>
 
-  <section id="screen-home" hidden>
-    <div class="stamp">家計簿</div>
-    <p id="home-status">로그인 완료</p>
-    <p class="home-email" id="home-email"></p>
-    <a id="sheet-link" class="btn-outline" href="#" target="_blank" rel="noopener" hidden>구글 시트에서 열기</a>
-    <button id="logout-btn" class="btn-outline" type="button">로그아웃</button>
+  <section id="screen-quick-add" hidden>
+    <div class="qa-topbar">
+      <span class="qa-topbar-email" id="qa-email"></span>
+      <span class="qa-topbar-links">
+        <a id="sheet-link" href="#" target="_blank" rel="noopener" hidden>시트 열기</a>
+        <button id="logout-btn" type="button">로그아웃</button>
+      </span>
+    </div>
+
+    <p id="qa-status" class="qa-status" hidden></p>
+
+    <div class="segmented" id="qa-segmented">
+      <button type="button" class="active expense" data-type="expense">지출</button>
+      <button type="button" class="income" data-type="income">수입</button>
+    </div>
+
+    <div class="qa-currency-select" id="qa-currency-select"></div>
+
+    <div class="qa-amount-block">
+      <div class="qa-amount-label">금액</div>
+      <div class="qa-amount">
+        <span class="cur" id="qa-currency-symbol">₩</span><span id="qa-amount-display">0</span><span class="caret"></span>
+      </div>
+    </div>
+
+    <div class="keypad" id="qa-keypad">
+      <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button>
+      <button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button>
+      <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
+      <button type="button" class="fn" data-key="000">000</button><button type="button" data-key="0">0</button><button type="button" class="fn" data-key="back">⌫</button>
+    </div>
+
+    <div class="section-label">카테고리</div>
+    <div class="row-scroll" id="qa-category-chips"></div>
+
+    <div class="section-label">결제 수단</div>
+    <div class="row-scroll" id="qa-payment-chips"></div>
+
+    <div class="qa-field">
+      <div class="qa-field-label">메모 (선택)</div>
+      <input class="qa-memo" id="qa-memo" placeholder="예: 회사 앞 카페">
+    </div>
+
+    <div class="qa-footer">
+      <div class="qa-footer-info" id="qa-footer-info">도장을 찍으면 시트에 바로 추가돼요</div>
+      <button id="qa-submit" class="stamp-btn" type="button">등록</button>
+    </div>
   </section>
 
 </div>

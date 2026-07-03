@@ -1,3 +1,5 @@
+import { MONTH_TABS } from '../config.js';
+
 const SPREADSHEETS_ENDPOINT = 'https://sheets.googleapis.com/v4/spreadsheets';
 
 function authHeaders(accessToken) {
@@ -36,4 +38,33 @@ export async function createSettingsSheet(accessToken, spreadsheetId) {
     }
   );
   if (!updateRes.ok) throw new Error(`Settings 값 입력 실패: ${updateRes.status}`);
+}
+
+export function monthTabFor(date) {
+  return MONTH_TABS[date.getMonth()];
+}
+
+// Date | Category | Pay. Method | Amount | Memo | Currency 순서로 한 행을
+// 해당 월 탭의 다음 빈 행에 추가한다. INSERT_ROWS를 쓰지 않고 OVERWRITE로
+// 채워야 같은 행의 Overview/예산 박스가 밀리지 않는다.
+export async function appendTransaction(accessToken, spreadsheetId, { date, category, payMethod, amount, memo, currency }) {
+  const tab = monthTabFor(date);
+  const dateStr = date.toISOString().slice(0, 10);
+  const range = encodeURIComponent(`'${tab}'!A5:F`);
+  const params = new URLSearchParams({
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'OVERWRITE',
+  });
+  const res = await fetch(
+    `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/${range}:append?${params.toString()}`,
+    {
+      method: 'POST',
+      headers: authHeaders(accessToken),
+      body: JSON.stringify({
+        values: [[dateStr, category, payMethod, amount, memo, currency]],
+      }),
+    }
+  );
+  if (!res.ok) throw new Error(`거래 등록 실패: ${res.status}`);
+  return res.json();
 }
