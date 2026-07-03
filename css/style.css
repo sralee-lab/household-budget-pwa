@@ -477,3 +477,74 @@ html, body {
   55% { transform: rotate(-6deg) scale(1.18); }
   100% { transform: rotate(-6deg) scale(1); }
 }
+
+/* ---------- 설정 화면 ---------- */
+#screen-settings {
+  flex: 1;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 32px;
+}
+
+.app-title { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--ink); }
+
+.st-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px 12px;
+}
+.st-back {
+  appearance: none; border: none; background: none; cursor: pointer;
+  font-size: 20px; color: var(--ink-soft); padding: 0;
+}
+.st-header-spacer { width: 20px; }
+
+.st-hint { padding: 4px 22px 0; font-size: 11px; color: var(--ink-soft); line-height: 1.5; margin: 0; }
+.st-rule { border: none; border-top: 1px solid var(--rule); margin: 14px 22px 0; }
+
+.st-list { margin: 6px 22px 0; }
+.st-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 2px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 14px;
+}
+.st-item-remove {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-soft); font-size: 13px; border: 1px solid var(--rule);
+  background: transparent; cursor: pointer; flex: none;
+}
+
+.st-add-row { display: flex; align-items: center; gap: 8px; margin: 12px 22px 0; }
+.st-add-input {
+  flex: 1; border: none; border-bottom: 1.5px dashed var(--rule); background: transparent;
+  font-family: var(--font-ui); font-size: 14px; color: var(--ink); padding: 8px 2px;
+}
+.st-add-input::placeholder { color: #a49a80; }
+.st-add-btn {
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid var(--seal); color: var(--seal);
+  display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700;
+  background: transparent; cursor: pointer;
+}
+
+.st-account { margin: 28px 22px 0; padding-top: 16px; border-top: 1px solid var(--rule); }
+.st-account-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.st-account-avatar {
+  width: 34px; height: 34px; border-radius: 50%; background: var(--paper-deep);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--ink-soft);
+}
+.st-account-email { font-size: 13px; color: var(--ink); font-weight: 500; }
+.st-account-caption { font-size: 11.5px; color: var(--ink-soft); margin-top: 1px; }
+.st-link-row { display: flex; flex-direction: column; gap: 10px; }
+.st-link {
+  appearance: none; border: none; background: none; text-align: left;
+  font-size: 13px; color: var(--ink-soft); text-decoration: none; cursor: pointer; padding: 0;
+}
+.st-link.danger { color: var(--seal); }

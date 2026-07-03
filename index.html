@@ -61,6 +61,8 @@
     <div class="qa-topbar">
       <span class="qa-topbar-email" id="qa-email"></span>
       <span class="qa-topbar-links">
+        <button id="nav-dashboard-btn" type="button">대시보드</button>
+        <button id="nav-settings-btn" type="button">설정</button>
         <a id="sheet-link" href="#" target="_blank" rel="noopener" hidden>시트 열기</a>
         <button id="logout-btn" type="button">로그아웃</button>
       </span>
@@ -117,6 +119,50 @@
         <button id="qa-submit" class="stamp-btn" type="button">등록</button>
       </div>
       <div class="qa-footer-info" id="qa-footer-info">도장을 찍으면 시트에 바로 추가돼요</div>
+    </div>
+  </section>
+
+  <section id="screen-settings" hidden>
+    <div class="st-header">
+      <button id="st-back-btn" class="st-back" type="button">←</button>
+      <span class="app-title">설정</span>
+      <span class="st-header-spacer"></span>
+    </div>
+
+    <p id="st-status" class="qa-status" hidden></p>
+
+    <div class="section-label" style="margin-top:2px;">기본 통화</div>
+    <div class="row-scroll" id="st-currency-chips"></div>
+    <p class="st-hint">대시보드는 이 통화로 환산해 합산해요. 등록할 때 거래별로 다른 통화를 선택할 수 있어요.</p>
+    <hr class="st-rule">
+
+    <div class="segmented" id="st-group-tabs">
+      <button type="button" class="active income" data-group="incomeCategories">수입</button>
+      <button type="button" data-group="fixedExpenseCategories">고정 지출</button>
+      <button type="button" data-group="variableExpenseCategories">변동 지출</button>
+      <button type="button" data-group="paymentMethods">결제 수단</button>
+    </div>
+
+    <div class="section-label" id="st-group-label">수입 카테고리</div>
+    <div class="st-list" id="st-item-list"></div>
+
+    <div class="st-add-row">
+      <input id="st-add-input" class="st-add-input" type="text" placeholder="새 항목 이름">
+      <button id="st-add-btn" class="st-add-btn" type="button">+</button>
+    </div>
+
+    <div class="st-account">
+      <div class="st-account-row">
+        <div class="st-account-avatar" id="st-avatar"></div>
+        <div>
+          <div class="st-account-email" id="st-email"></div>
+          <div class="st-account-caption">이 계정으로 만든 나만의 가계부</div>
+        </div>
+      </div>
+      <div class="st-link-row">
+        <a id="st-sheet-link" class="st-link" href="#" target="_blank" rel="noopener">구글 시트에서 직접 열기</a>
+        <button id="st-logout-btn" class="st-link danger" type="button">로그아웃</button>
+      </div>
     </div>
   </section>
 

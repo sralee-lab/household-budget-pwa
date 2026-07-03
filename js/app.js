@@ -1,16 +1,21 @@
 import { redirectToLogin, consumeTokenFromRedirect, getStoredToken, clearToken, fetchUserInfo } from './auth.js';
 import { findMySpreadsheet, findMostRecentSpreadsheet, copyTemplateForUser, spreadsheetEditUrl } from './drive-api.js';
-import { createSettingsSheet, readSettingsValues } from './sheets-api.js';
-import { initQuickAdd, showOnboardingMessage } from './quick-add.js';
+import { createSettingsSheet, readSettingsValues, readSettings } from './sheets-api.js';
+import { initQuickAdd, showOnboardingMessage, updateQuickAddSettings } from './quick-add.js';
 import { showOnboardingChoice } from './onboarding.js';
 import { getLinkedSheetId } from './local-store.js';
+import { initSettings } from './settings.js';
 
 const screens = {
   login: document.getElementById('screen-login'),
   loading: document.getElementById('screen-loading'),
   onboarding: document.getElementById('screen-onboarding'),
   quickAdd: document.getElementById('screen-quick-add'),
+  settings: document.getElementById('screen-settings'),
 };
+
+// 로그인 완료 후 화면 전환(설정 등)에 필요한 값들을 여기 보관한다.
+const session = { accessToken: null, spreadsheetId: null, email: null };
 
 function showScreen(name) {
   for (const [key, el] of Object.entries(screens)) {
@@ -101,9 +106,21 @@ async function boot() {
     const userInfo = await fetchUserInfo(token.accessToken);
     const { file, onboardingMessage } = await resolveSpreadsheet(token.accessToken, userInfo.email);
 
+    session.accessToken = token.accessToken;
+    session.spreadsheetId = file.id;
+    session.email = userInfo.email;
+
+    setLoadingMessage('설정 불러오는 중...');
+    let settings = null;
+    try {
+      settings = await readSettings(token.accessToken, file.id);
+    } catch (err) {
+      settings = null;
+    }
+
     showSheetLink(file.id);
     showScreen('quickAdd');
-    initQuickAdd(token.accessToken, file.id, userInfo.email);
+    initQuickAdd(token.accessToken, file.id, userInfo.email, settings);
     if (onboardingMessage) showOnboardingMessage(onboardingMessage);
   } catch (err) {
     clearToken();
@@ -120,6 +137,26 @@ document.getElementById('login-btn').addEventListener('click', () => {
 document.getElementById('logout-btn').addEventListener('click', () => {
   clearToken();
   showScreen('login');
+});
+
+document.getElementById('st-logout-btn').addEventListener('click', () => {
+  clearToken();
+  showScreen('login');
+});
+
+document.getElementById('nav-settings-btn').addEventListener('click', () => {
+  showScreen('settings');
+  initSettings(session.accessToken, session.spreadsheetId, session.email, (updatedSettings) => {
+    updateQuickAddSettings(updatedSettings);
+    showScreen('quickAdd');
+  });
+});
+
+document.getElementById('nav-dashboard-btn').addEventListener('click', () => {
+  const el = document.getElementById('qa-status');
+  el.textContent = '대시보드는 곧 추가돼요!';
+  el.hidden = false;
+  setTimeout(() => { el.hidden = true; }, 2000);
 });
 
 if ('serviceWorker' in navigator) {

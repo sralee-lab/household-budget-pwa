@@ -1,4 +1,4 @@
-import { MONTH_TABS } from '../config.js';
+import { MONTH_TABS, DEFAULT_CURRENCY } from '../config.js';
 
 const SPREADSHEETS_ENDPOINT = 'https://sheets.googleapis.com/v4/spreadsheets';
 
@@ -11,13 +11,14 @@ function authHeaders(accessToken) {
 
 // 결제수단은 "카드"/"현금" 같은 뭉뚱그린 이름이 아니라 "신한카드"처럼
 // 구체적인 이름을 각자 자유롭게 등록하는 걸 전제로 한 예시 기본값이다.
+// E열은 기본 통화 하나만 담는 별도 칸(E2)이다.
 export const DEFAULT_SETTINGS_VALUES = [
-  ['Income Categories', 'Fixed Expense Categories', 'Variable Expense Categories', 'Payment Methods'],
-  ['급여', '월세', '식비', '신한카드'],
-  ['용돈', '구독료', '카페·간식', '현금'],
-  ['부수입', '보험', '교통', '국민은행 계좌이체'],
-  ['', '', '쇼핑', ''],
-  ['', '', '의료', ''],
+  ['Income Categories', 'Fixed Expense Categories', 'Variable Expense Categories', 'Payment Methods', 'Default Currency'],
+  ['급여', '월세', '식비', '신한카드', DEFAULT_CURRENCY],
+  ['용돈', '구독료', '카페·간식', '현금', ''],
+  ['부수입', '보험', '교통', '국민은행 계좌이체', ''],
+  ['', '', '쇼핑', '', ''],
+  ['', '', '의료', '', ''],
 ];
 
 export async function getSheetTitles(accessToken, spreadsheetId) {
@@ -32,12 +33,67 @@ export async function getSheetTitles(accessToken, spreadsheetId) {
 
 export async function readSettingsValues(accessToken, spreadsheetId) {
   const res = await fetch(
-    `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/Settings!A1:D100`,
+    `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/Settings!A1:E100`,
     { headers: authHeaders(accessToken) }
   );
   if (!res.ok) throw new Error(`Settings 읽기 실패: ${res.status}`);
   const data = await res.json();
   return data.values || null;
+}
+
+function columnValues(rawValues, columnIndex) {
+  return (rawValues || [])
+    .slice(1) // 헤더 행 제외
+    .map((row) => (row[columnIndex] || '').trim())
+    .filter((v) => v !== '');
+}
+
+// Settings 원본 2차원 배열을 앱이 쓰기 편한 구조화된 객체로 바꾼다.
+export function parseSettings(rawValues) {
+  return {
+    incomeCategories: columnValues(rawValues, 0),
+    fixedExpenseCategories: columnValues(rawValues, 1),
+    variableExpenseCategories: columnValues(rawValues, 2),
+    paymentMethods: columnValues(rawValues, 3),
+    defaultCurrency: (rawValues && rawValues[1] && rawValues[1][4]) || DEFAULT_CURRENCY,
+  };
+}
+
+export async function readSettings(accessToken, spreadsheetId) {
+  const raw = await readSettingsValues(accessToken, spreadsheetId);
+  return parseSettings(raw);
+}
+
+// 구조화된 settings 객체를 다시 A1:E 그리드로 펼쳐서 통째로 덮어쓴다.
+// values.update는 넘겨준 셀만 덮어쓸 뿐 범위 안의 나머지 셀은 그대로 두므로,
+// 목록이 이전보다 짧아진 경우를 대비해 범위(100행) 전체를 빈 문자열로
+// 패딩해서 보내야 예전에 남아있던 값이 지워진다.
+const SETTINGS_DATA_ROWS = 99; // 헤더 1행 + 데이터 99행 = A1:E100
+
+export async function writeSettings(accessToken, spreadsheetId, settings) {
+  const { incomeCategories, fixedExpenseCategories, variableExpenseCategories, paymentMethods, defaultCurrency } = settings;
+  const values = [
+    ['Income Categories', 'Fixed Expense Categories', 'Variable Expense Categories', 'Payment Methods', 'Default Currency'],
+  ];
+  for (let i = 0; i < SETTINGS_DATA_ROWS; i++) {
+    values.push([
+      incomeCategories[i] || '',
+      fixedExpenseCategories[i] || '',
+      variableExpenseCategories[i] || '',
+      paymentMethods[i] || '',
+      i === 0 ? defaultCurrency : '',
+    ]);
+  }
+
+  const res = await fetch(
+    `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/Settings!A1:E100?valueInputOption=RAW`,
+    {
+      method: 'PUT',
+      headers: authHeaders(accessToken),
+      body: JSON.stringify({ values }),
+    }
+  );
+  if (!res.ok) throw new Error(`Settings 저장 실패: ${res.status}`);
 }
 
 // 새 Settings 탭을 만들고 seedValues(없으면 기본 예시값)로 채운다.

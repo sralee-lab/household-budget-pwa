@@ -12,8 +12,24 @@ import { appendTransaction, appendTransactions } from './sheets-api.js';
 let state = null;
 let nextQueueId = 1;
 
+// Settings 탭에서 읽어온 값을 우선 쓰고, 비어 있으면(설정을 전부 지웠거나
+// 아직 못 읽어온 경우) config.js의 하드코딩된 기본값으로 대체한다.
+function deriveCategoryLists(settings) {
+  const expense = [
+    ...(settings.fixedExpenseCategories || []),
+    ...(settings.variableExpenseCategories || []),
+  ];
+  const income = settings.incomeCategories || [];
+  const paymentMethods = settings.paymentMethods || [];
+  return {
+    expense: expense.length ? expense : EXPENSE_CATEGORIES,
+    income: income.length ? income : INCOME_CATEGORIES,
+    paymentMethods: paymentMethods.length ? paymentMethods : PAYMENT_METHODS,
+  };
+}
+
 function categoriesForType(type) {
-  return type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  return type === 'expense' ? state.categoryLists.expense : state.categoryLists.income;
 }
 
 function renderCurrencyChips() {
@@ -54,7 +70,9 @@ function renderCategoryChips() {
 function renderPaymentChips() {
   const el = document.getElementById('qa-payment-chips');
   el.innerHTML = '';
-  for (const pm of PAYMENT_METHODS) {
+  const methods = state.categoryLists.paymentMethods;
+  if (!methods.includes(state.payMethod)) state.payMethod = methods[0];
+  for (const pm of methods) {
     const chip = document.createElement('button');
     chip.type = 'button';
     chip.className = 'chip' + (pm === state.payMethod ? ' is-active' : '');
@@ -240,15 +258,17 @@ async function handleSubmit() {
   }
 }
 
-export function initQuickAdd(accessToken, spreadsheetId, email) {
+export function initQuickAdd(accessToken, spreadsheetId, email, settings) {
+  const categoryLists = deriveCategoryLists(settings || {});
   state = {
     accessToken,
     spreadsheetId,
     type: 'expense',
-    currency: DEFAULT_CURRENCY,
+    currency: (settings && settings.defaultCurrency) || DEFAULT_CURRENCY,
     amountDigits: '',
-    category: EXPENSE_CATEGORIES[0],
-    payMethod: PAYMENT_METHODS[0],
+    categoryLists,
+    category: categoryLists.expense[0],
+    payMethod: categoryLists.paymentMethods[0],
     keyboardMode: false,
     queue: [],
   };
@@ -296,4 +316,12 @@ export function initQuickAdd(accessToken, spreadsheetId, email) {
 
 export function showOnboardingMessage(message) {
   showQaMessage(message, false);
+}
+
+// 설정 화면에서 돌아왔을 때 카테고리/결제수단/기본통화를 즉시 반영한다.
+export function updateQuickAddSettings(settings) {
+  if (!state) return;
+  state.categoryLists = deriveCategoryLists(settings || {});
+  renderCategoryChips();
+  renderPaymentChips();
 }
