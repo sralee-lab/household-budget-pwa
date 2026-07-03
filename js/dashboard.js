@@ -1,6 +1,6 @@
 import { MONTH_TABS, CURRENCY_SYMBOLS } from '../config.js';
 import { readMonthLog } from './sheets-api.js';
-import { convertAmount } from './fx.js';
+import { convertAmountWithRate } from './fx.js';
 
 let state = null;
 
@@ -130,9 +130,12 @@ function renderRecentList() {
     } else {
       amountSpan.textContent = formatMoney(t.convertedAmount, currency);
       if (t.currency !== currency) {
+        const fromSymbol = CURRENCY_SYMBOLS[t.currency] || '';
+        const toSymbol = CURRENCY_SYMBOLS[currency] || '';
+        const rateText = t.rate ? `${fromSymbol}1 = ${toSymbol}${t.rate.toFixed(2)}` : '';
         const orig = document.createElement('span');
         orig.className = 'fx-original';
-        orig.textContent = `${formatMoney(t.amount, t.currency)} · ${md} 환율`;
+        orig.textContent = `${formatMoney(t.amount, t.currency)} · ${rateText} (${md})`;
         amountSpan.appendChild(orig);
       }
     }
@@ -183,9 +186,10 @@ async function loadAndRender() {
 
   for (const row of rows) {
     let convertedAmount;
+    let rate = 1;
     let fxFailed = false;
     try {
-      convertedAmount = await convertAmount(row.amount, row.currency, target, row.dateStr);
+      ({ convertedAmount, rate } = await convertAmountWithRate(row.amount, row.currency, target, row.dateStr));
     } catch (err) {
       // 환율 조회 실패 시 액면가로 대체하되, 조용히 넘어가지 않고 아래에서
       // 사용자에게 알린다 — 다른 통화 거래가 환산 없이 섞여 합계가 틀려
@@ -203,7 +207,7 @@ async function loadAndRender() {
       categoryTotals.set(row.category, (categoryTotals.get(row.category) || 0) + convertedAmount);
       paymentTotals.set(row.payMethod, (paymentTotals.get(row.payMethod) || 0) + convertedAmount);
     }
-    transactions.push({ ...row, convertedAmount, isIncome, fxFailed });
+    transactions.push({ ...row, convertedAmount, isIncome, fxFailed, rate });
   }
 
   state.totalIncome = totalIncome;

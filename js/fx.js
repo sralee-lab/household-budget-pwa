@@ -22,8 +22,10 @@ export async function getHistoricalRate(dateStr, from, to) {
   return rate;
 }
 
-export async function convertAmount(amount, fromCurrency, toCurrency, dateStr) {
-  if (fromCurrency === toCurrency) return amount;
+// 환산된 금액과 함께 적용된 환율 자체도 반환한다(화면에 "1엔 = 9.58원"처럼
+// 보여주기 위함). 같은 통화면 rate는 1.
+export async function convertAmountWithRate(amount, fromCurrency, toCurrency, dateStr) {
+  if (fromCurrency === toCurrency) return { convertedAmount: amount, rate: 1 };
   const rate = await getHistoricalRate(dateStr, fromCurrency, toCurrency);
-  return amount * rate;
+  return { convertedAmount: amount * rate, rate };
 }
