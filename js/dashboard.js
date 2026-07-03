@@ -128,6 +128,12 @@ function renderRecentList() {
     row.appendChild(catSpan);
     row.appendChild(dots);
     row.appendChild(amountSpan);
+
+    if (state.onEditTransaction) {
+      row.classList.add('is-clickable');
+      row.addEventListener('click', () => state.onEditTransaction(t));
+    }
+
     el.appendChild(row);
   }
 }
@@ -192,7 +198,7 @@ async function loadAndRender() {
   renderRecentList();
 }
 
-export async function initDashboard(accessToken, spreadsheetId, settings) {
+export async function initDashboard(accessToken, spreadsheetId, settings, onEditTransaction) {
   state = {
     accessToken,
     spreadsheetId,
@@ -204,6 +210,7 @@ export async function initDashboard(accessToken, spreadsheetId, settings) {
     categoryTotals: new Map(),
     paymentTotals: new Map(),
     transactions: [],
+    onEditTransaction,
   };
 
   document.getElementById('db-tabs').onclick = (event) => {
@@ -214,5 +221,12 @@ export async function initDashboard(accessToken, spreadsheetId, settings) {
     renderActiveBreakdown();
   };
 
+  await loadAndRender();
+}
+
+// 거래 수정/삭제 후 같은 달을 다시 불러온다(선택된 달을 초기화하지 않기 위해
+// initDashboard를 다시 부르지 않고 이 함수를 쓴다).
+export async function reloadCurrentMonth() {
+  if (!state) return;
   await loadAndRender();
 }

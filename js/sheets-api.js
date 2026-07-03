@@ -140,7 +140,8 @@ export function monthTabFor(dateStr) {
 // N:Pay. Method, O:Amount, P:Memo), 데이터는 4행부터 시작한다 — 실제 시트를
 // 확인해 얻은 값(사용자가 시트에서 첫 빈 줄의 Date 셀이 L4임을 확인해줌).
 // 새로 추가한 Currency 열은 그 바로 다음인 Q열에 둔다.
-const SPENDING_RANGE_START = 'L4';
+const SPENDING_START_ROW = 4;
+const SPENDING_RANGE_START = `L${SPENDING_START_ROW}`;
 const SPENDING_RANGE_END = 'Q';
 
 // Date | Category | Pay. Method | Amount | Memo | Currency 순서로 한 행을
@@ -221,7 +222,9 @@ export async function readMonthLog(accessToken, spreadsheetId, monthTab) {
   if (!res.ok) throw new Error(`거래 내역 조회 실패: ${res.status}`);
   const data = await res.json();
   return (data.values || [])
-    .map((row) => ({
+    .map((row, index) => ({
+      rowNumber: SPENDING_START_ROW + index,
+      monthTab,
       dateStr: typeof row[0] === 'number' ? serialDateToLocalStr(row[0]) : '',
       category: row[1] || '',
       payMethod: row[2] || '',
@@ -230,4 +233,33 @@ export async function readMonthLog(accessToken, spreadsheetId, monthTab) {
       currency: row[5] || DEFAULT_CURRENCY,
     }))
     .filter((row) => row.dateStr && row.amount);
+}
+
+// 특정 행 하나를 수정한다. 날짜를 다른 달로 바꾼 경우, 호출하는 쪽에서
+// appendTransaction으로 새 달에 추가하고 이 함수 대신 deleteTransactionRow로
+// 원래 행을 지우는 방식으로 처리해야 한다(이 함수는 같은 탭 안에서의
+// 수정만 담당).
+export async function updateTransactionRow(accessToken, spreadsheetId, monthTab, rowNumber, { dateStr, category, payMethod, amount, memo, currency }) {
+  const range = encodeURIComponent(`'${monthTab}'!L${rowNumber}:Q${rowNumber}`);
+  const params = new URLSearchParams({ valueInputOption: 'USER_ENTERED' });
+  const res = await fetch(
+    `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/${range}?${params.toString()}`,
+    {
+      method: 'PUT',
+      headers: authHeaders(accessToken),
+      body: JSON.stringify({ values: [[dateStr, category, payMethod, amount, memo, currency]] }),
+    }
+  );
+  if (!res.ok) throw new Error(`거래 수정 실패: ${res.status}`);
+}
+
+// 행을 삭제(실제로는 셀 값만 비움)한다. INSERT_ROWS/deleteDimension으로 실제
+// 행을 옮기면 같은 행의 다른 박스가 밀리므로, 빈 줄로 남기는 쪽을 택한다.
+export async function deleteTransactionRow(accessToken, spreadsheetId, monthTab, rowNumber) {
+  const range = encodeURIComponent(`'${monthTab}'!L${rowNumber}:Q${rowNumber}`);
+  const res = await fetch(
+    `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/${range}:clear`,
+    { method: 'POST', headers: authHeaders(accessToken) }
+  );
+  if (!res.ok) throw new Error(`거래 삭제 실패: ${res.status}`);
 }

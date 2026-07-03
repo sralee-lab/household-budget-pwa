@@ -172,6 +172,53 @@
     </div>
   </section>
 
+  <section id="screen-edit-txn" hidden>
+    <div class="st-header">
+      <button id="et-back-btn" class="st-back" type="button">←</button>
+      <span class="app-title">거래 수정</span>
+      <span class="st-header-spacer"></span>
+    </div>
+
+    <p id="et-status" class="qa-status" hidden></p>
+
+    <div class="qa-date-row">
+      <span class="qa-date-label">날짜</span>
+      <input type="date" id="et-date" class="qa-date-input">
+    </div>
+
+    <div class="qa-currency-select" id="et-currency-chips"></div>
+
+    <div class="qa-amount-block">
+      <div class="qa-amount-label">금액</div>
+      <div class="qa-amount">
+        <span class="cur" id="et-currency-symbol">₩</span><input id="et-amount" class="qa-amount-input" inputmode="numeric" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="section-label">카테고리</div>
+    <div class="row-scroll" id="et-category-chips"></div>
+
+    <div class="section-label">결제 수단</div>
+    <div class="row-scroll" id="et-payment-chips"></div>
+
+    <div class="qa-field">
+      <div class="qa-field-label">메모</div>
+      <input class="qa-memo" id="et-memo" placeholder="메모 없음">
+    </div>
+
+    <div class="qa-footer">
+      <div class="qa-footer-buttons">
+        <button id="et-delete-btn" class="btn-outline et-delete-btn" type="button">삭제</button>
+        <button id="et-save-btn" class="stamp-btn is-stamped" type="button">저장</button>
+      </div>
+      <div id="et-confirm-row" class="et-confirm-row" hidden>
+        <span>정말 삭제할까요?</span>
+        <button id="et-delete-confirm" class="et-confirm-yes" type="button">삭제</button>
+        <button id="et-delete-cancel" class="et-confirm-no" type="button">취소</button>
+      </div>
+    </div>
+  </section>
+
   <section id="screen-settings" hidden>
     <div class="st-header">
       <button id="st-back-btn" class="st-back" type="button">←</button>

@@ -630,3 +630,19 @@ html, body {
 .ledger-amount { white-space: nowrap; text-align: right; }
 .ledger-amount .fx-original { display: block; font-size: 10.5px; color: var(--ink-soft); font-weight: 400; margin-top: 1px; }
 .ledger-empty { padding: 20px 22px; text-align: center; color: var(--ink-soft); font-size: 13px; }
+.ledger-row.is-clickable { cursor: pointer; }
+.ledger-row.is-clickable:active { background: var(--paper-deep); }
+
+.et-delete-btn { color: var(--seal); border-color: var(--seal); flex: none; }
+.et-confirm-row {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--ink-soft);
+}
+.et-confirm-yes {
+  appearance: none; border: none; background: var(--seal); color: var(--cream);
+  border-radius: 8px; padding: 8px 14px; font-weight: 700; font-size: 12.5px; cursor: pointer;
+}
+.et-confirm-no {
+  appearance: none; border: 1px solid var(--rule); background: transparent; color: var(--ink-soft);
+  border-radius: 8px; padding: 8px 14px; font-size: 12.5px; cursor: pointer;
+}

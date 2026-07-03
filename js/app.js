@@ -5,7 +5,8 @@ import { initQuickAdd, showOnboardingMessage, updateQuickAddSettings } from './q
 import { showOnboardingChoice } from './onboarding.js';
 import { getLinkedSheetId } from './local-store.js';
 import { initSettings } from './settings.js';
-import { initDashboard } from './dashboard.js';
+import { initDashboard, reloadCurrentMonth } from './dashboard.js';
+import { initEditTransaction } from './edit-transaction.js';
 
 const screens = {
   login: document.getElementById('screen-login'),
@@ -14,6 +15,7 @@ const screens = {
   quickAdd: document.getElementById('screen-quick-add'),
   settings: document.getElementById('screen-settings'),
   dashboard: document.getElementById('screen-dashboard'),
+  editTxn: document.getElementById('screen-edit-txn'),
 };
 
 // 로그인 완료 후 화면 전환(설정/대시보드 등)에 필요한 값들을 여기 보관한다.
@@ -156,11 +158,30 @@ document.getElementById('nav-settings-btn').addEventListener('click', () => {
   });
 });
 
-document.getElementById('nav-dashboard-btn').addEventListener('click', () => {
+function openDashboard() {
   showScreen('dashboard');
   const settings = session.settings || { incomeCategories: [], defaultCurrency: 'KRW' };
-  initDashboard(session.accessToken, session.spreadsheetId, settings);
-});
+  initDashboard(session.accessToken, session.spreadsheetId, settings, (txn) => {
+    showScreen('editTxn');
+    initEditTransaction(
+      session.accessToken,
+      session.spreadsheetId,
+      settings,
+      txn,
+      () => {
+        // 저장/삭제 완료 → 대시보드로 돌아가서 같은 달을 새로고침.
+        showScreen('dashboard');
+        reloadCurrentMonth();
+      },
+      () => {
+        // 그냥 뒤로가기(저장 안 함).
+        showScreen('dashboard');
+      }
+    );
+  });
+}
+
+document.getElementById('nav-dashboard-btn').addEventListener('click', openDashboard);
 
 document.getElementById('db-back-btn').addEventListener('click', () => {
   showScreen('quickAdd');
