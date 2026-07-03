@@ -9,6 +9,7 @@ export const SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/drive.readonly',
+  'https://www.googleapis.com/auth/userinfo.email',
 ].join(' ');
 
 // 이 앱이 만든 사본 스프레드시트를 식별하기 위한 Drive appProperties 값.
