@@ -5,6 +5,7 @@ import { initQuickAdd, showOnboardingMessage, updateQuickAddSettings } from './q
 import { showOnboardingChoice } from './onboarding.js';
 import { getLinkedSheetId } from './local-store.js';
 import { initSettings } from './settings.js';
+import { initDashboard } from './dashboard.js';
 
 const screens = {
   login: document.getElementById('screen-login'),
@@ -12,10 +13,11 @@ const screens = {
   onboarding: document.getElementById('screen-onboarding'),
   quickAdd: document.getElementById('screen-quick-add'),
   settings: document.getElementById('screen-settings'),
+  dashboard: document.getElementById('screen-dashboard'),
 };
 
-// 로그인 완료 후 화면 전환(설정 등)에 필요한 값들을 여기 보관한다.
-const session = { accessToken: null, spreadsheetId: null, email: null };
+// 로그인 완료 후 화면 전환(설정/대시보드 등)에 필요한 값들을 여기 보관한다.
+const session = { accessToken: null, spreadsheetId: null, email: null, settings: null };
 
 function showScreen(name) {
   for (const [key, el] of Object.entries(screens)) {
@@ -117,6 +119,7 @@ async function boot() {
     } catch (err) {
       settings = null;
     }
+    session.settings = settings;
 
     showSheetLink(file.id);
     showScreen('quickAdd');
@@ -147,16 +150,20 @@ document.getElementById('st-logout-btn').addEventListener('click', () => {
 document.getElementById('nav-settings-btn').addEventListener('click', () => {
   showScreen('settings');
   initSettings(session.accessToken, session.spreadsheetId, session.email, (updatedSettings) => {
+    session.settings = updatedSettings;
     updateQuickAddSettings(updatedSettings);
     showScreen('quickAdd');
   });
 });
 
 document.getElementById('nav-dashboard-btn').addEventListener('click', () => {
-  const el = document.getElementById('qa-status');
-  el.textContent = '대시보드는 곧 추가돼요!';
-  el.hidden = false;
-  setTimeout(() => { el.hidden = true; }, 2000);
+  showScreen('dashboard');
+  const settings = session.settings || { incomeCategories: [], defaultCurrency: 'KRW' };
+  initDashboard(session.accessToken, session.spreadsheetId, settings);
+});
+
+document.getElementById('db-back-btn').addEventListener('click', () => {
+  showScreen('quickAdd');
 });
 
 if ('serviceWorker' in navigator) {

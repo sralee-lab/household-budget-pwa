@@ -122,6 +122,51 @@
     </div>
   </section>
 
+  <section id="screen-dashboard" hidden>
+    <div class="db-header">
+      <button id="db-back-btn" class="st-back" type="button">←</button>
+      <div class="db-title-wrap">
+        <div class="db-yearline" id="db-yearline"></div>
+        <h1 class="db-title" id="db-title"></h1>
+      </div>
+      <span class="st-header-spacer"></span>
+    </div>
+
+    <div class="row-scroll" id="db-month-chips"></div>
+
+    <p id="db-status" class="qa-status" hidden></p>
+
+    <div class="db-summary">
+      <div class="db-summary-col">
+        <div class="db-summary-label">수입</div>
+        <div class="db-summary-figure figure income" id="db-income">₩0</div>
+      </div>
+      <div class="db-summary-divider"></div>
+      <div class="db-summary-col">
+        <div class="db-summary-label">지출</div>
+        <div class="db-summary-figure figure expense" id="db-expense">₩0</div>
+      </div>
+    </div>
+
+    <div class="db-balance">
+      <div class="db-balance-label">이번 달 잔액</div>
+      <div class="db-balance-figure figure" id="db-balance">₩0</div>
+    </div>
+
+    <div class="db-tabs" id="db-tabs">
+      <span class="db-tab active" data-tab="category">카테고리별</span>
+      <span class="db-tab" data-tab="payment">결제수단별</span>
+    </div>
+    <hr class="st-rule" style="margin-top:0;">
+
+    <div class="scroll">
+      <div class="ledger-list" id="db-breakdown-list"></div>
+
+      <div class="section-label">최근 거래</div>
+      <div class="ledger-list" id="db-recent-list"></div>
+    </div>
+  </section>
+
   <section id="screen-settings" hidden>
     <div class="st-header">
       <button id="st-back-btn" class="st-back" type="button">←</button>

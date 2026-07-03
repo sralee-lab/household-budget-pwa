@@ -196,3 +196,38 @@ export async function appendTransactions(accessToken, spreadsheetId, transaction
     if (!res.ok) throw new Error(`거래 등록 실패: ${res.status}`);
   }
 }
+
+// 구글 시트의 날짜 직렬값(1899-12-30 기준 경과 일수)을 로컬 "YYYY-MM-DD"
+// 문자열로 바꾼다. 날짜 열을 FORMATTED_VALUE로 읽으면 셀 서식(예: M/D/YYYY)에
+// 따라 형식이 달라져 파싱이 깨질 수 있어, UNFORMATTED_VALUE로 받은 직렬값을
+// 직접 변환한다.
+function serialDateToLocalStr(serial) {
+  const epochUTC = Date.UTC(1899, 11, 30);
+  const d = new Date(epochUTC + Math.round(serial) * 86400000);
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+// 한 달 탭의 Spending 표 전체를 읽어 거래 배열로 반환한다.
+export async function readMonthLog(accessToken, spreadsheetId, monthTab) {
+  const range = encodeURIComponent(`'${monthTab}'!${SPENDING_RANGE_START}:${SPENDING_RANGE_END}`);
+  const params = new URLSearchParams({ valueRenderOption: 'UNFORMATTED_VALUE' });
+  const res = await fetch(
+    `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/${range}?${params.toString()}`,
+    { headers: authHeaders(accessToken) }
+  );
+  if (!res.ok) throw new Error(`거래 내역 조회 실패: ${res.status}`);
+  const data = await res.json();
+  return (data.values || [])
+    .map((row) => ({
+      dateStr: typeof row[0] === 'number' ? serialDateToLocalStr(row[0]) : '',
+      category: row[1] || '',
+      payMethod: row[2] || '',
+      amount: Number(row[3] || 0),
+      memo: row[4] || '',
+      currency: row[5] || DEFAULT_CURRENCY,
+    }))
+    .filter((row) => row.dateStr && row.amount);
+}
