@@ -1,4 +1,6 @@
 import { redirectToLogin, consumeTokenFromRedirect, getStoredToken, clearToken, fetchUserInfo } from './auth.js';
+import { findMySpreadsheet, copyTemplateForUser, spreadsheetEditUrl } from './drive-api.js';
+import { createSettingsSheet } from './sheets-api.js';
 
 const screens = {
   login: document.getElementById('screen-login'),
@@ -18,6 +20,16 @@ function showLoginError(message) {
   el.hidden = !message;
 }
 
+function setLoadingMessage(message) {
+  document.getElementById('loading-message').textContent = message;
+}
+
+function showSheetLink(fileId) {
+  const link = document.getElementById('sheet-link');
+  link.href = spreadsheetEditUrl(fileId);
+  link.hidden = false;
+}
+
 async function boot() {
   const redirectedToken = consumeTokenFromRedirect();
   const token = redirectedToken || getStoredToken();
@@ -28,9 +40,24 @@ async function boot() {
   }
 
   showScreen('loading');
+  setLoadingMessage('확인 중...');
   try {
     const userInfo = await fetchUserInfo(token.accessToken);
     document.getElementById('home-email').textContent = userInfo.email;
+
+    setLoadingMessage('가계부 확인 중...');
+    let file = await findMySpreadsheet(token.accessToken);
+
+    if (file) {
+      document.getElementById('home-status').textContent = '가계부를 찾았어요';
+    } else {
+      setLoadingMessage('가계부를 처음 만드는 중이에요...');
+      file = await copyTemplateForUser(token.accessToken, userInfo.email);
+      await createSettingsSheet(token.accessToken, file.id);
+      document.getElementById('home-status').textContent = '가계부를 새로 만들었어요!';
+    }
+
+    showSheetLink(file.id);
     showScreen('home');
   } catch (err) {
     clearToken();

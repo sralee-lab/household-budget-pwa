@@ -1,4 +1,4 @@
-const CACHE_NAME = 'household-budget-shell-v2';
+const CACHE_NAME = 'household-budget-shell-v3';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -7,6 +7,8 @@ const SHELL_FILES = [
   './css/style.css',
   './js/app.js',
   './js/auth.js',
+  './js/drive-api.js',
+  './js/sheets-api.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
 ];
