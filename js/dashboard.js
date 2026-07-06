@@ -50,6 +50,42 @@ function renderSummary() {
   balanceEl.classList.toggle('expense', balance < 0);
 }
 
+// 계좌는 선택한 달과 무관하게 항상 "현재" 잔액을 보여준다(각 계좌 고유
+// 통화 그대로 — 기본 통화로 억지 환산하지 않음, 실제 그 계좌에 들어있는
+// 금액을 그대로 보여주는 게 더 정확하다).
+function renderAccountCards() {
+  const section = document.getElementById('db-accounts');
+  const accounts = state.settings.accounts || [];
+  if (accounts.length === 0) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  section.innerHTML = '';
+
+  const label = document.createElement('div');
+  label.className = 'db-summary-label';
+  label.textContent = '계좌 잔액';
+  section.appendChild(label);
+
+  for (const acc of accounts) {
+    const row = document.createElement('div');
+    row.className = 'ledger-row';
+    const name = document.createElement('span');
+    name.className = 'ledger-cat';
+    name.textContent = acc.name;
+    const dots = document.createElement('span');
+    dots.className = 'ledger-dots';
+    const amount = document.createElement('span');
+    amount.className = 'ledger-amount figure';
+    amount.textContent = formatMoney(acc.currentBalance, acc.currency);
+    row.appendChild(name);
+    row.appendChild(dots);
+    row.appendChild(amount);
+    section.appendChild(row);
+  }
+}
+
 function renderEmptyRow(list, message) {
   const empty = document.createElement('div');
   empty.className = 'ledger-empty';
@@ -224,6 +260,7 @@ async function loadAndRender() {
   }
 
   renderSummary();
+  renderAccountCards();
   renderActiveBreakdown();
   renderRecentList();
 }

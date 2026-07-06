@@ -73,8 +73,6 @@
       </span>
     </div>
 
-    <p id="qa-status" class="qa-status" hidden></p>
-
     <div class="qa-date-row">
       <span class="qa-date-label">날짜</span>
       <input type="date" id="qa-date" class="qa-date-input">
@@ -123,6 +121,7 @@
         <button id="qa-queue-add" class="btn-outline qa-queue-add-btn" type="button">+ 담기</button>
         <button id="qa-submit" class="stamp-btn" type="button">등록</button>
       </div>
+      <p id="qa-status" class="qa-status qa-status-footer" hidden></p>
       <div class="qa-footer-info" id="qa-footer-info">도장을 찍으면 시트에 바로 추가돼요</div>
     </div>
   </section>
@@ -157,6 +156,8 @@
       <div class="db-balance-label">이번 달 잔액</div>
       <div class="db-balance-figure figure" id="db-balance">₩0</div>
     </div>
+
+    <div class="db-accounts" id="db-accounts" hidden></div>
 
     <div class="db-tabs" id="db-tabs">
       <span class="db-tab active" data-tab="category">카테고리별</span>
@@ -246,6 +247,17 @@
     <div class="st-add-row">
       <input id="st-add-input" class="st-add-input" type="text" placeholder="새 항목 이름">
       <button id="st-add-btn" class="st-add-btn" type="button">+</button>
+    </div>
+
+    <div class="st-accounts">
+      <div class="section-label">계좌</div>
+      <div class="st-list" id="st-accounts-list"></div>
+      <div class="st-add-account-row">
+        <input id="st-account-name-input" class="st-add-input" type="text" placeholder="계좌 이름">
+        <input id="st-account-balance-input" class="st-add-input st-account-balance-input" type="number" inputmode="numeric" placeholder="시작 잔액">
+        <button id="st-account-add-btn" class="st-add-btn" type="button">+</button>
+      </div>
+      <div class="qa-currency-select" id="st-account-currency-select"></div>
     </div>
 
     <div class="st-account">

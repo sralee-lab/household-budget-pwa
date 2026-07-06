@@ -277,6 +277,10 @@ html, body {
 }
 .qa-status.is-error { border-color: var(--seal); color: var(--seal); }
 
+/* 등록 버튼 바로 아래(footer 안)에서 뜨는 성공/실패 메시지 — 화면 위쪽에
+   뜨던 예전 위치는 등록 버튼(화면 아래)과 멀어 놓치기 쉬웠다. */
+.qa-status-footer { margin: 0 0 10px; }
+
 .qa-date-row {
   display: flex;
   align-items: center;
@@ -552,6 +556,29 @@ html, body {
   background: transparent; cursor: pointer;
 }
 
+.st-account-link-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 2px 10px; margin-top: -6px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 12px; color: var(--ink-soft);
+}
+.st-account-link-label { white-space: nowrap; }
+.st-account-link-select {
+  flex: 1; border: 1px solid var(--rule); border-radius: 8px; background: var(--cream);
+  font-family: var(--font-ui); font-size: 12px; color: var(--ink); padding: 6px 8px;
+}
+
+.st-accounts { margin: 22px 22px 0; }
+.st-account-item { align-items: center; }
+.st-account-item-info { display: flex; flex-direction: column; gap: 2px; }
+.st-account-item-name { font-size: 14px; color: var(--ink); font-weight: 500; }
+.st-account-item-balance { font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft); }
+.st-account-item-actions { display: flex; align-items: center; gap: 10px; }
+.st-account-item-actions .st-link { font-size: 11.5px; text-decoration: underline; }
+
+.st-add-account-row { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; }
+.st-account-balance-input { max-width: 110px; }
+
 .st-account { margin: 28px 22px 0; padding-top: 16px; border-top: 1px solid var(--rule); }
 .st-account-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .st-account-avatar {
@@ -603,6 +630,15 @@ html, body {
 .db-balance { margin: 14px 22px 0; text-align: center; padding: 14px 0 2px; }
 .db-balance-label { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); letter-spacing: 0.04em; }
 .db-balance-figure { font-size: 30px; font-weight: 600; margin-top: 6px; }
+
+.db-accounts {
+  margin: 14px 22px 0;
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  padding: 14px 18px 6px;
+}
+.db-accounts .ledger-row:last-child { border-bottom: none; }
 
 .db-tabs { display: flex; gap: 18px; padding: 0 22px; margin-top: 4px; }
 .db-tab {

@@ -7,24 +7,31 @@ import {
   INCOME_CATEGORIES,
   PAYMENT_METHODS,
 } from '../config.js';
-import { appendTransaction, appendTransactions } from './sheets-api.js';
+import { appendTransaction, appendTransactions, adjustAccountBalance } from './sheets-api.js';
+import { convertAmountWithRate } from './fx.js';
 
 let state = null;
 let nextQueueId = 1;
 
 // Settings 탭에서 읽어온 값을 우선 쓰고, 비어 있으면(설정을 전부 지웠거나
 // 아직 못 읽어온 경우) config.js의 하드코딩된 기본값으로 대체한다.
+// paymentMethods는 이제 {name, type, linkedAccount} 레코드 배열이라, 칩
+// 렌더링용 이름 목록과 "이 결제수단이 어느 계좌에 연결됐는지" 조회용 맵을
+// 함께 만들어둔다.
 function deriveCategoryLists(settings) {
   const expense = [
     ...(settings.fixedExpenseCategories || []),
     ...(settings.variableExpenseCategories || []),
   ];
   const income = settings.incomeCategories || [];
-  const paymentMethods = settings.paymentMethods || [];
+  const paymentMethodRecords = (settings.paymentMethods || []).length
+    ? settings.paymentMethods
+    : PAYMENT_METHODS.map((name) => ({ name, type: '', linkedAccount: '' }));
   return {
     expense: expense.length ? expense : EXPENSE_CATEGORIES,
     income: income.length ? income : INCOME_CATEGORIES,
-    paymentMethods: paymentMethods.length ? paymentMethods : PAYMENT_METHODS,
+    paymentMethods: paymentMethodRecords.map((pm) => pm.name),
+    paymentMethodAccounts: new Map(paymentMethodRecords.map((pm) => [pm.name, pm.linkedAccount || ''])),
   };
 }
 
@@ -148,15 +155,23 @@ function showQaMessage(message, isError) {
   }, 3000);
 }
 
+// 등록 버튼 자체에서 성공을 확인할 수 있게, 도장 애니메이션 동안 버튼
+// 라벨을 잠깐 "완료"로 바꿨다가 되돌린다 — 성공 메시지가 화면 위쪽에만
+// 떠서 등록 버튼(화면 아래)을 누른 시선과 멀어 놓치기 쉽다는 피드백 반영.
 function playStampAnimation() {
   const btn = document.getElementById('qa-submit');
+  if (!btn.dataset.originalLabel) btn.dataset.originalLabel = btn.textContent;
   btn.classList.remove('is-stamped');
   // 리플로우를 강제해 같은 클래스를 다시 붙여도 애니메이션이 재생되게 한다.
   void btn.offsetWidth;
   btn.classList.add('is-stamped');
+  // 84px 원형 버튼 안에 들어가야 해서 기존 "등록"과 길이가 비슷한 두 글자로
+  // 맞춘다(체크 기호까지 넣으면 원 밖으로 넘칠 수 있어 제외).
+  btn.textContent = '완료';
   clearTimeout(playStampAnimation._timer);
   playStampAnimation._timer = setTimeout(() => {
     btn.classList.remove('is-stamped');
+    btn.textContent = btn.dataset.originalLabel;
   }, 900);
 }
 
@@ -181,7 +196,29 @@ function currentEntryOrNull() {
     amount,
     memo: document.getElementById('qa-memo').value.trim(),
     currency: state.currency,
+    account: state.categoryLists.paymentMethodAccounts.get(state.payMethod) || '',
   };
+}
+
+// 등록된 거래가 계좌에 연결돼 있으면 그 계좌의 현재 잔액을 반영한다(지출은
+// 차감, 수입은 증가). 거래 통화가 계좌 고유 통화와 다르면 fx.js로 계좌
+// 통화 기준으로 환산한다(대시보드가 기본 통화로 환산하는 것과 같은
+// 원리이되, 기준 통화가 "계좌 자신의 통화"라는 점만 다르다).
+async function applyAccountDelta(entry) {
+  if (!entry.account) return;
+  const account = (state.settings.accounts || []).find((a) => a.name === entry.account);
+  if (!account) return;
+  let amt = entry.amount;
+  if (entry.currency !== account.currency) {
+    try {
+      const { convertedAmount } = await convertAmountWithRate(entry.amount, entry.currency, account.currency, entry.dateStr);
+      amt = convertedAmount;
+    } catch (err) {
+      // 환율 조회 실패 시 대시보드와 같은 원칙으로 액면가 그대로 반영.
+    }
+  }
+  const delta = entry.type === 'income' ? amt : -amt;
+  await adjustAccountBalance(state.accessToken, state.spreadsheetId, state.settings, entry.account, delta);
 }
 
 function describeEntry(entry) {
@@ -246,6 +283,9 @@ async function handleSubmit() {
     } else {
       await appendTransactions(state.accessToken, state.spreadsheetId, entries);
     }
+    for (const entry of entries) {
+      await applyAccountDelta(entry);
+    }
     playStampAnimation();
     showQaMessage(entries.length === 1 ? '등록했어요!' : `${entries.length}건 등록했어요!`, false);
     state.queue = [];
@@ -263,6 +303,7 @@ export function initQuickAdd(accessToken, spreadsheetId, email, settings) {
   state = {
     accessToken,
     spreadsheetId,
+    settings: settings || { accounts: [] },
     type: 'expense',
     currency: (settings && settings.defaultCurrency) || DEFAULT_CURRENCY,
     amountDigits: '',
@@ -318,9 +359,10 @@ export function showOnboardingMessage(message) {
   showQaMessage(message, false);
 }
 
-// 설정 화면에서 돌아왔을 때 카테고리/결제수단/기본통화를 즉시 반영한다.
+// 설정 화면에서 돌아왔을 때 카테고리/결제수단/기본통화/계좌 목록을 즉시 반영한다.
 export function updateQuickAddSettings(settings) {
   if (!state) return;
+  state.settings = settings || { accounts: [] };
   state.categoryLists = deriveCategoryLists(settings || {});
   renderCategoryChips();
   renderPaymentChips();
