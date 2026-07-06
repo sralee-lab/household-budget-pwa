@@ -144,21 +144,44 @@ const SPENDING_START_ROW = 4;
 const SPENDING_RANGE_START = `L${SPENDING_START_ROW}`;
 const SPENDING_RANGE_END = 'Q';
 
+// Google Sheets의 values.append(+insertDataOption=OVERWRITE)는 지정한 범위
+// 안에서 "맨 위부터 연속으로 값이 있는 표"를 찾아 그 바로 다음 행에 쓴다 —
+// 범위 전체의 진짜 마지막 행이 아니라 중간에 빈 행(gap)이 하나만 있어도 그
+// 바로 다음 행에 덮어써버린다. deleteTransactionRow()는 행을 당기지 않고
+// 값만 지우므로 삭제/이동된 거래가 하나라도 있으면 표 중간에 이런 gap이
+// 생기고, 그 뒤로는 신규 등록이 gap 다음의 기존 거래를 조용히 덮어써
+// "성공했다는데 시트엔 안 보이는" 버그로 이어진다. 그래서 append API 대신
+// Date 열만 읽어 진짜 마지막 사용 행을 직접 계산한 뒤 values.update로 정확한
+// 행에 쓴다.
+async function findNextEmptyRow(accessToken, spreadsheetId, monthTab) {
+  const range = encodeURIComponent(`'${monthTab}'!L${SPENDING_START_ROW}:L1008`);
+  const params = new URLSearchParams({ valueRenderOption: 'UNFORMATTED_VALUE' });
+  const res = await fetch(
+    `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/${range}?${params.toString()}`,
+    { headers: authHeaders(accessToken) }
+  );
+  if (!res.ok) throw new Error(`거래 내역 조회 실패: ${res.status}`);
+  const data = await res.json();
+  // 응답 배열은 항상 "진짜 마지막으로 값이 있는 행"까지만 오고(트레일링 빈
+  // 행은 생략되지만 중간의 gap은 빈 배열 요소로 그대로 포함된다), 그래서
+  // 길이만으로 gap 여부와 무관하게 정확한 다음 행을 구할 수 있다.
+  const values = data.values || [];
+  return SPENDING_START_ROW + values.length;
+}
+
 // Date | Category | Pay. Method | Amount | Memo | Currency 순서로 한 행을
-// 해당 월 탭의 다음 빈 행에 추가한다. INSERT_ROWS를 쓰지 않고 OVERWRITE로
-// 채워야 같은 행의 다른 박스(Overview/Credit card usage/Account management
-// 등)가 밀리지 않는다.
+// 해당 월 탭의 다음 빈 행에 추가한다. 실제 행 삽입(INSERT_ROWS)은 쓰지
+// 않는다 — 같은 행의 다른 박스(Overview/Credit card usage/Account
+// management 등)가 밀리는 것을 방지하기 위함이다.
 export async function appendTransaction(accessToken, spreadsheetId, { dateStr, category, payMethod, amount, memo, currency }) {
   const tab = monthTabFor(dateStr);
-  const range = encodeURIComponent(`'${tab}'!${SPENDING_RANGE_START}:${SPENDING_RANGE_END}`);
-  const params = new URLSearchParams({
-    valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'OVERWRITE',
-  });
+  const row = await findNextEmptyRow(accessToken, spreadsheetId, tab);
+  const range = encodeURIComponent(`'${tab}'!L${row}:Q${row}`);
+  const params = new URLSearchParams({ valueInputOption: 'USER_ENTERED' });
   const res = await fetch(
-    `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/${range}:append?${params.toString()}`,
+    `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/${range}?${params.toString()}`,
     {
-      method: 'POST',
+      method: 'PUT',
       headers: authHeaders(accessToken),
       body: JSON.stringify({
         values: [[dateStr, category, payMethod, amount, memo, currency]],
@@ -169,8 +192,9 @@ export async function appendTransaction(accessToken, spreadsheetId, { dateStr, c
   return res.json();
 }
 
-// 여러 건을 한 번에 등록한다 — 날짜가 다른 달에 걸쳐 있으면 월 탭별로
-// 묶어서 탭당 한 번씩 append 호출한다(같은 탭이면 한 번의 호출로 끝난다).
+// 여러 건을 한 번에 등록한다 — 날짜가 다른 달에 걸쳐 있으면 월 탭별로 묶어서
+// 탭당 다음 빈 행을 한 번만 계산하고, 그 탭에 속한 항목들을 이어지는 행
+// 범위에 한 번의 values.update로 쓴다.
 export async function appendTransactions(accessToken, spreadsheetId, transactions) {
   const byTab = new Map();
   for (const t of transactions) {
@@ -179,17 +203,15 @@ export async function appendTransactions(accessToken, spreadsheetId, transaction
     byTab.get(tab).push([t.dateStr, t.category, t.payMethod, t.amount, t.memo, t.currency]);
   }
 
-  const range = (tab) => encodeURIComponent(`'${tab}'!${SPENDING_RANGE_START}:${SPENDING_RANGE_END}`);
-  const params = new URLSearchParams({
-    valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'OVERWRITE',
-  });
-
   for (const [tab, rows] of byTab) {
+    const startRow = await findNextEmptyRow(accessToken, spreadsheetId, tab);
+    const endRow = startRow + rows.length - 1;
+    const range = encodeURIComponent(`'${tab}'!L${startRow}:Q${endRow}`);
+    const params = new URLSearchParams({ valueInputOption: 'USER_ENTERED' });
     const res = await fetch(
-      `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/${range(tab)}:append?${params.toString()}`,
+      `${SPREADSHEETS_ENDPOINT}/${spreadsheetId}/values/${range}?${params.toString()}`,
       {
-        method: 'POST',
+        method: 'PUT',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ values: rows }),
       }
